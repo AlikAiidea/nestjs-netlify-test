@@ -1,8 +1,14 @@
 {
-  "name": "search-base",
+  "name": "base-project",
   "version": "0.0.1",
-  "description": "",
-  "author": "",
+  "description": "Create base project blueprint for new projects",
+  "author": "Majid Ahmadi Jebeli <itpaz@outlook.com>",
+  "contributors": [
+    {
+      "name": "Majid Ahmadi Jebeli",
+      "email": "itpaz@outlook.com"
+    }
+  ],
   "private": true,
   "license": "UNLICENSED",
   "scripts": {
