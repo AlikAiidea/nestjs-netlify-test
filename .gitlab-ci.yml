@@ -1,0 +1,60 @@
+stages:
+  - test
+  # - build
+  # - deploy
+
+test:
+  stage: test
+  image: node:lts-alpine
+  coverage: /All files[^|]*\|[^|]*\s+([\d\.]+)/
+  script:
+    - npm i
+    - npm run test:cov
+# build-docker:
+#   stage: build
+#   image: docker:stable
+#   rules:
+#     - if: "$CI_COMMIT_TAG =~ /^v.*$/"
+#       variables:
+#         IMAGE_TAG: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_TAG}
+#     - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev" || $CI_COMMIT_BRANCH == "test"'
+#       variables:
+#         IMAGE_TAG: ${CI_REGISTRY_IMAGE}:${CI_COMMIT_BRANCH}
+#   script:
+#     - echo "${CI_REGISTRY_PASSWORD}" | docker login --username ${CI_REGISTRY_USER} --password-stdin ${CI_REGISTRY}
+#     - echo ${IMAGE_TAG}
+#     - docker build --tag ${IMAGE_TAG} .
+#     - docker push ${IMAGE_TAG}
+
+# deploy-dev:
+#   stage: deploy
+#   rules:
+#     - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "dev" || $CI_COMMIT_BRANCH == "test"'
+#       variables:
+#         D_USER: ${SERVER_USER}
+#         D_IP: ${SERVER_IP}
+#         D_PATH: ${BASE_DIR}/${CI_COMMIT_BRANCH}
+#   script:
+#     - docker login --username ${CI_REGISTRY_USER} --password  "${CI_REGISTRY_PASSWORD}" ${CI_REGISTRY}
+#     - cd ${D_PATH} docker compose pull base-project
+#     - cd ${D_PATH} docker compose up --force-recreate --detach base-project
+#     - docker logout
+
+# deploy-prod:
+#   stage: deploy
+#   tags:
+#     - pateh-prod-2
+#   rules:
+#     - if: "$CI_COMMIT_TAG =~ /^v.*$/"
+#       variables:
+#         D_USER: ${SERVER_USER_P}
+#         D_IP: ${SERVER_IP_P}
+#         D_PORT: ${SERVER_PORT_P}
+#         D_PATH: ${SERVER_PATH_P}
+#       when: manual
+#   script:
+#     - chmod go= $DEPLOY_KEY
+#     - ssh -i $DEPLOY_KEY -o StrictHostKeyChecking=no -p $D_PORT $D_USER@$D_IP "echo '${CI_REGISTRY_PASSWORD}' | docker login --username ${CI_REGISTRY_USER} --password-stdin ${CI_REGISTRY}"
+#     - ssh -i $DEPLOY_KEY -o StrictHostKeyChecking=no -p $D_PORT $D_USER@$D_IP "cd ${D_PATH} && dotenv set TAG_BUS=${CI_COMMIT_TAG}"
+#     - ssh -i $DEPLOY_KEY -o StrictHostKeyChecking=no -p $D_PORT $D_USER@$D_IP "cd ${D_PATH} && docker compose pull base-project"
+#     - ssh -i $DEPLOY_KEY -o StrictHostKeyChecking=no -p $D_PORT $D_USER@$D_IP "cd ${D_PATH} && docker compose up --force-recreate --detach base-project"
