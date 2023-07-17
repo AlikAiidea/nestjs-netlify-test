@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  base-project:
+    container_name: base-project
+    build: .
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - '${SERVICE_DOCKER_PORT}:${SERVICE_PORT}'
