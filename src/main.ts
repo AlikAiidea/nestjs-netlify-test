@@ -1,10 +1,19 @@
 import { NestFactory } from '@nestjs/core'
+import { MicroserviceOptions, Transport } from '@nestjs/microservices'
+import { NestExpressApplication } from '@nestjs/platform-express'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
 
 import { AppModule } from './app.module'
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule)
+  /** App instance */
+  const app = await NestFactory.create<NestExpressApplication>(AppModule)
+
+  /** Set global prefix of the service */
+  app.setGlobalPrefix('api')
+
+  /** Active as a micro service */
+  app.connectMicroservice<MicroserviceOptions>({ transport: Transport.TCP })
 
   /** Swagger */
   const config = new DocumentBuilder()
@@ -23,8 +32,8 @@ async function bootstrap() {
       },
     },
   }
-  SwaggerModule.setup('api-doc', app, document)
+  SwaggerModule.setup('apidoc', app, document)
 
-  await app.listen(3000).then(async () => console.info('Service is running %s/api-doc', await app.getUrl()))
+  await app.listen(3000).then(async () => console.info('Service is running %s/apidoc', await app.getUrl()))
 }
 bootstrap()
