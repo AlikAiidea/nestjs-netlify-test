@@ -1,3 +1,4 @@
+import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 import { MicroserviceOptions, Transport } from '@nestjs/microservices'
 import { NestExpressApplication } from '@nestjs/platform-express'
@@ -34,6 +35,14 @@ async function bootstrap() {
   }
   SwaggerModule.setup('apidoc', app, document)
 
-  await app.listen(3000).then(async () => console.info('Service is running %s/apidoc', await app.getUrl()))
+  /** Listen the app to HTTP requests */
+  await app
+    .listen(app.get(ConfigService).get('SERVICE_PORT'), app.get(ConfigService).get('SERVICE_HOST'))
+    .then(async (value: any) => {
+      console.info(
+        `(${app.get(ConfigService).get('SERVICE_NAME')}) Server started:      %s/ath/apidoc`,
+        await app.getUrl(),
+      )
+    })
 }
 bootstrap()
