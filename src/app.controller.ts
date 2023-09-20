@@ -1,13 +1,27 @@
 import { Controller, Get } from '@nestjs/common'
+import { ApiBasicAuth, ApiBearerAuth, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger'
 
-import { AppService } from './app.service'
+import { Version } from './common/dto/version.dto'
 
+/**
+ * Controller for handling project-specific operations.
+ */
+@ApiTags('Version')
+@ApiBasicAuth('API_ACCESS_TOKEN')
+@ApiBearerAuth('AUTHORIZATION')
 @Controller()
 export class AppController {
-  constructor(private readonly appService: AppService) {}
-
+  /**
+   * Show version of the project
+   * @returns project version
+   */
+  @ApiOperation({
+    summary: 'Project version',
+    description: `Displays the current version of the project`,
+  })
+  @ApiOkResponse({ type: Version })
   @Get()
-  getHello(): string {
-    return this.appService.getHello()
+  showVersion() {
+    return { version: require('../package.json').version }
   }
 }
