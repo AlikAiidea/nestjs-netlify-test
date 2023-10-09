@@ -1,8 +1,9 @@
-FROM node:19.8.1-slim
+FROM docker.ptdev.ir/node:19.8.1-slim
 
 WORKDIR /app
 COPY . .
 
+RUN npm config set registry https://npm.ptdev.ir/repository/npm/
 RUN npm install
 RUN npm run build
 
