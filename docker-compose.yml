@@ -8,4 +8,4 @@ services:
     env_file:
       - .env
     ports:
-      - '${SERVICE_DOCKER_PORT}:${SERVICE_PORT}'
+      - '${SERVICE_DOCKER_PORT}:${SERVICE_HTTP_PORT}'

@@ -56,7 +56,10 @@ async function bootstrap() {
   /** Enable WinstonLogger for logging every request with different log lvl */
   app.useGlobalInterceptors(
     new HttpLoggerInterceptor(
-      new WinstonLogger(app.get(ConfigService).get(Env.LOG_IN_CONSOLE), app.get(ConfigService).get(Env.LOG_IN_FILE)),
+      new WinstonLogger(
+        app.get(ConfigService).get(Env.SERVICE_CONSOLE_LOG),
+        app.get(ConfigService).get(Env.SERVICE_FILE_LOG),
+      ),
       app.get(ConfigService).get(Env.SERVICE_HTTP_LOG_LEVEL) || 'MINIMAL',
     ),
   )
@@ -67,8 +70,8 @@ async function bootstrap() {
   /** Listen the app to HTTP requests */
   await app
     .listen(
-      +app.get(ConfigService).get(Env.SERVICE_PORT) || 3000,
-      (app.get(ConfigService).get(Env.SERVICE_HOST) as string) || '127.0.0.1',
+      +app.get(ConfigService).get(Env.SERVICE_HTTP_PORT) || 3000,
+      (app.get(ConfigService).get(Env.SERVICE_HTTP_HOST) as string) || '127.0.0.1',
     )
     .then(async () =>
       console.info(
