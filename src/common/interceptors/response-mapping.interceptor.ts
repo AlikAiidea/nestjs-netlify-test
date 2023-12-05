@@ -17,11 +17,19 @@ import { IResponse } from '../dto/interfaces/response.interface'
 export class ResponseMappingInterceptor<T> implements NestInterceptor<T, IResponse<T>> {
   intercept(context: ExecutionContext, next: CallHandler): Observable<IResponse<T>> {
     return next.handle().pipe(
-      map((data) => data),
+      map((data) => {
+        return {
+          success: true,
+          message: 'successfully fetched',
+          data: data,
+          meta: { count: Array.isArray(data) ? data.length : 1 },
+        }
+      }),
       catchError(async (error) => {
         throw new HttpException(
           {
             success: false,
+            status: error.status,
             message: error.response ? error.response.message ?? 'Unknown error' : 'Unknown error',
           },
           error.response ? error.response.statusCode : 500,
