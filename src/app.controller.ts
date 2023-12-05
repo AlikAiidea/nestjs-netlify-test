@@ -22,6 +22,7 @@ export class AppController {
   @ApiOkResponse({ type: Version })
   @Get()
   showVersion() {
-    return { version: require('../package.json').version }
+    console.log('into showVersion')
+    return { version: process.env.npm_package_version }
   }
 }

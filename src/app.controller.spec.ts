@@ -20,7 +20,7 @@ describe('AppController', () => {
 
   describe('showVersion', () => {
     it('should return the project version', () => {
-      const expectedVersion = require('../package.json').version
+      const expectedVersion = process.env.version
       const result = controller.showVersion()
       expect(result).toEqual({ version: expectedVersion })
     })
