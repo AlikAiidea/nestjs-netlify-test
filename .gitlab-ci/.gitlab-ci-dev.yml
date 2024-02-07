@@ -1,0 +1,33 @@
+stages:
+  - build
+  - deploy
+
+Build development:
+  stage: build
+  before_script:
+    - echo $CLOUD_REGISTRY_PASS | docker login -u $CLOUD_REGISTRY_USER --password-stdin $CLOUD_REGISTRY_URL
+  only:
+    - develop
+  tags:
+    - cloud-dev-manager1
+  variables:
+    IMAGE_TAG: ${CLOUD_REGISTRY_URL}/CHANGEME:$CI_COMMIT_REF_NAME
+  script:
+    - cp $DEPLOY_CLOUD_PATH/CHANGEME/.env .
+    - docker build -t $IMAGE_TAG .
+    - docker push $IMAGE_TAG
+
+Deploy development:
+  stage: deploy
+  only:
+    - develop
+  needs:
+    - Build development
+  tags:
+    - cloud-dev-manager1
+  variables:
+    IMAGE_TAG: ${CLOUD_REGISTRY_URL}/CHANGEME:$CI_COMMIT_REF_NAME
+  script:
+    - cp $DEPLOY_CLOUD_PATH/CHANGEME/docker-compose.yml .
+    - cp $DEPLOY_CLOUD_PATH/CHANGEME/.env .
+    - docker stack deploy -c docker-compose.yml CHANGEME --with-registry-auth
