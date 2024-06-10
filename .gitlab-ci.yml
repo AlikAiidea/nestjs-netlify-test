@@ -1,3 +1,70 @@
-include:
-  - /.gitlab-ci/.gitlab-ci-dev.yml
-  - /.gitlab-ci/.gitlab-ci-prod.yml
+stages:
+  - build
+  - deploy
+
+variables:
+  IMAGE_TAG: ${CLOUD_REGISTRY_URL}/pateh-assistant-chimpanzee:$CI_COMMIT_REF_NAME
+
+
+build-docker:
+  stage: build
+  before_script:
+    - docker login --username ${CLOUD_REGISTRY_USER} --password ${CLOUD_REGISTRY_PASS} ${CLOUD_REGISTRY_URL}
+  script:
+    - docker image build --pull --rm --compress --file Dockerfile $(echo $BUILD_ARGS | tr ' ' '\n' | sed 's/^/--build-arg "/;s/$/" /') --tag "${IMAGE_TAG}" --push .
+  variables:
+    BUILD_ARGS: ""  # Separate args with space. e.g: "ARG1=VAL1 ARG2=VAL2"
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop"' || '$CI_COMMIT_TAG =~ /^v.*$/'
+      when: always
+    - when: never
+
+.deploy:
+  stage: deploy
+  variables:
+    SERVER_KEY: ""
+    SERVER_PORT: ""
+    SERVER_IP: ""
+    SERVER_USER: ""
+    SERVER_COMPOSE_PATH: ""
+
+  before_script:
+    - install -m 400 -D "${SERVER_KEY}" ~/.ssh/id_ed25519
+    - ssh-keyscan -p "${SERVER_PORT}" -H "${SERVER_IP}" > ~/.ssh/known_hosts
+  script:
+    - ssh ${SERVER_USER}@${SERVER_IP} -p ${SERVER_PORT} "
+      docker login --username ${CLOUD_REGISTRY_USER} --password ${CLOUD_REGISTRY_PASS} ${CLOUD_REGISTRY_URL} &&
+      docker image pull --quiet '${IMAGE_TAG}' &&
+      dotenv --file '${SERVER_COMPOSE_PATH}/.env' &&
+      docker compose --project-directory '${SERVER_COMPOSE_PATH}' up --pull never --detach"
+
+deploy-dev:
+  extends: .deploy
+  variables:
+    SERVER_KEY: "${SERVER_KEY_DEV}"
+    SERVER_PORT: "${SERVER_PORT_DEV}"
+    SERVER_IP: "${SERVER_IP_DEV}"
+    SERVER_USER: "${SERVER_USER_DEV}"
+    SERVER_COMPOSE_PATH: "${DEPLOY_PATH_DEV}/webengage-api-butterfly"
+  only:
+    - develop
+  
+
+
+deploy-prod:
+  stage: deploy
+  extends: .deploy
+  tags:
+    - is-srv1 
+  variables:
+    SERVER_KEY: "${SERVER_KEY_PROD}"
+    SERVER_PORT: "${SERVER_PORT_PROD}"
+    SERVER_IP: "${SERVER_IP_PROD}"
+    SERVER_USER: "${SERVER_USER_PROD}"
+    SERVER_COMPOSE_PATH: "${DEPLOY_PATH}/webengage-api-butterfly"
+
+  rules:
+    - if: '$CI_COMMIT_TAG =~ /^v.*$/'
+      when: always
+    - when: never
+
