@@ -1,9 +1,9 @@
 version: '3.8'
 
 services:
-  base-project:
-    container_name: base-project
-    build: .
+  webengage-api-butterfly:
+    image: $IMAGE_TAG
+    container_name: webengage-api-butterfly
     restart: always
     env_file:
       - .env
