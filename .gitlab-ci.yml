@@ -15,7 +15,7 @@ build-docker:
   variables:
     BUILD_ARGS: ""  # Separate args with space. e.g: "ARG1=VAL1 ARG2=VAL2"
   rules:
-    - if: '$CI_COMMIT_BRANCH == "develop"' || '$CI_COMMIT_TAG =~ /^v.*$/'
+    - if: '$CI_COMMIT_BRANCH == "develop" || $CI_COMMIT_TAG =~ /^v.*$/'
       when: always
     - when: never
 
