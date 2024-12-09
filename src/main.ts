@@ -1,32 +1,44 @@
 import 'winston-daily-rotate-file'
 
-import { ValidationPipe } from '@nestjs/common'
+import { Logger, ValidationPipe } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 import { MicroserviceOptions, Transport } from '@nestjs/microservices'
 import { NestExpressApplication } from '@nestjs/platform-express'
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger'
+import * as Sentry from '@sentry/node'
 
 import { AppModule } from './app.module'
 import { Env } from './common/dto/enums/env.enum'
-import { HttpLoggerInterceptor } from './common/interceptors/http-logger.interceptor'
-import { ResponseMappingInterceptor } from './common/interceptors/response-mapping.interceptor'
-import { WinstonLogger } from './common/utils/logger'
+import { ResponseMappingInterceptor } from './common/interceptors/http-response-mapping.interceptor'
+import { SentryInterceptor } from './common/interceptors/sentry.interceptor'
+import { HttpLoggerInterceptor } from './common/loggers/http.logger'
+import { MainLogger } from './common/loggers/main.logger'
 
 async function bootstrap() {
+  const mainLogger = new MainLogger()
+
   /** App instance */
-  const app = await NestFactory.create<NestExpressApplication>(AppModule)
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    ...(process.env[Env.SERVICE_LOG_TYPE] === 'pretty' ? {} : { logger: mainLogger }),
+  })
 
   /** Set global prefix of the service */
   app.setGlobalPrefix('api')
 
-  /** Active as a micro service */
-  app.connectMicroservice<MicroserviceOptions>({ transport: Transport.TCP })
+  const configService = app.get(ConfigService)
+
+  try {
+    /** Active as a micro service */
+    app.connectMicroservice<MicroserviceOptions>({ transport: Transport.TCP })
+  } catch (error) {
+    Logger.error(error)
+  }
 
   /** Swagger */
   const config = new DocumentBuilder()
-    .setTitle(app.get(ConfigService).get(Env.SERVICE_NAME))
-    .setDescription('Lorem ipsum')
+    .setTitle('Base 🦁')
+    .setDescription(`Description of the base project 🦁`)
     .setVersion(require('../package.json').version)
     .addServer(`http://127.0.0.1:3000/`, 'Local server')
     .addServer(`https://api.ptdev.ir/`, 'Development server')
@@ -53,32 +65,28 @@ async function bootstrap() {
   /** Activating Class validator */
   app.useGlobalPipes(new ValidationPipe())
 
-  /** Enable WinstonLogger for logging every request with different log lvl */
-  app.useGlobalInterceptors(
-    new HttpLoggerInterceptor(
-      new WinstonLogger(
-        app.get(ConfigService).get(Env.SERVICE_CONSOLE_LOG),
-        app.get(ConfigService).get(Env.SERVICE_FILE_LOG),
-      ),
-      app.get(ConfigService).get(Env.SERVICE_HTTP_LOG_LEVEL) || 'MINIMAL',
-    ),
-  )
+  /** Initialize Sentry */
+  Sentry.init({
+    dsn: configService.get(Env.SENTRY_NODE_DSN),
+    tracesSampleRate: +configService.get(Env.SENTRY_TRACES_SAMPLE_RATE),
+    release: require('../package.json').version,
+    serverName: configService.get(Env.SENTRY_SERVER_NAME),
+  })
 
-  /** Response mapping interceptor to normalize responses */
-  app.useGlobalInterceptors(new ResponseMappingInterceptor())
+  /** Enable WinstonLogger for logging every request with different log lvl and Response mapping interceptor to normalize responses */
+  app.useGlobalInterceptors(new HttpLoggerInterceptor(), new ResponseMappingInterceptor(), new SentryInterceptor())
 
   /** Listen the app to HTTP requests */
   await app
     .listen(
-      +app.get(ConfigService).get(Env.SERVICE_HTTP_PORT) || 3000,
-      (app.get(ConfigService).get(Env.SERVICE_HTTP_HOST) as string) || '127.0.0.1',
+      +configService.get(Env.SERVICE_HTTP_PORT) || 3000,
+      (configService.get(Env.SERVICE_HTTP_HOST) as string) || '127.0.0.1',
     )
-    .then(async () =>
-      console.info(
-        '%s is running, swagger is available on %s/apidoc',
-        app.get(ConfigService).get(Env.SERVICE_NAME),
-        await app.getUrl(),
-      ),
-    )
+    .then(async () => {
+      Logger.log(
+        `${configService.get(Env.SERVICE_NAME)} is running, swagger is available on ${await app.getUrl()}/apidoc 🚀 `,
+        'BASE 🦁',
+      )
+    })
 }
 bootstrap()

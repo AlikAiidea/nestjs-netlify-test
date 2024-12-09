@@ -2,11 +2,11 @@
   "name": "base-project",
   "version": "0.0.1",
   "description": "Create base project blueprint for new projects",
-  "author": "Majid Ahmadi Jebeli <itpaz@outlook.com>",
+  "author": "developer <dev@gmail.com>",
   "contributors": [
     {
-      "name": "Majid Ahmadi Jebeli",
-      "email": "itpaz@outlook.com"
+      "name": "developer",
+      "email": "dev@gmail.com"
     }
   ],
   "private": true,
@@ -33,6 +33,7 @@
     "@nestjs/microservices": "^10.1.0",
     "@nestjs/platform-express": "^10.0.0",
     "@nestjs/swagger": "^7.1.1",
+    "@sentry/node": "^8.42.0",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "reflect-metadata": "^0.1.13",
