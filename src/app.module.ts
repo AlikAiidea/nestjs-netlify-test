@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 
 import { AppController } from './app.controller'
+import { HealthController } from './health.controller'
 
 @Module({
   imports: [
@@ -9,7 +10,7 @@ import { AppController } from './app.controller'
       isGlobal: true,
     }),
   ],
-  controllers: [AppController],
+  controllers: [AppController, HealthController],
   providers: [],
 })
 export class AppModule {}
